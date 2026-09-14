@@ -1,4 +1,6 @@
+import os
 import pytest
+
 
 from orion.obsidian import Vault
 
@@ -59,7 +61,11 @@ def test_create_duplicate_rejected(vault):
 def test_list_notes(vault):
     out = vault.list_notes()
     assert out["total"] == 2
-    assert "Inbox/Meeting notes.md" in out["notes"]
+    
+    # os.path.join creates "Inbox/Meeting notes.md" on Linux 
+    # and "Inbox\\Meeting notes.md" on Windows
+    expected_path = os.path.join("Inbox", "Meeting notes.md")
+    assert expected_path in out["notes"]
 
 
 def test_path_traversal_blocked(vault):
