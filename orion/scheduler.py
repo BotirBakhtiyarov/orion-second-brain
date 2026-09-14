@@ -10,6 +10,7 @@ scheduled run never spends tokens or needs an API key.
 """
 
 import json
+import re
 import time
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
@@ -85,14 +86,47 @@ def task_vault_tidy(vault) -> str:
     return f"inbox has {inbox['total']} note(s) to triage"
 
 
+def task_backlink_check(vault) -> str:
+    """Scan notes for unresolved [[...]] links and report non-destructively."""
+    notes_list = vault.list_notes().get("notes", [])
+
+    # Obsidian links omit the .md extension. Created a set of base names for fast O(1) lookups.
+    existing_note_names = {Path(n).stem for n in notes_list}
+
+    # Used a set to collect broken links so duplicates are only counted once
+    missing_targets = set()
+    link_pattern = re.compile(r"\[\[(.*?)\]\]")
+
+    for note_path in notes_list:
+        content = vault.transport.read(note_path)
+
+        matches = link_pattern.findall(content)
+
+        for match in matches:
+            # Handle aliases like [[Target Note|Click Here]] or headers [[Target Note#Header]]
+            target = match.split("|")[0].split("#")[0].strip()
+
+            if target and target not in existing_note_names:
+                # Add the broken target to our set
+                missing_targets.add(target)
+
+    # Count how many unique broken targets we found
+    count = len(missing_targets)
+    if count == 0:
+        return "backlink check: 0 unresolved links found"
+    return f"backlink check: found {count} unresolved link(s)"
+
+
 TASKS = {
     "daily_note": task_daily_note,
     "vault_tidy": task_vault_tidy,
+    "backlink_check": task_backlink_check,
 }
 
 TASK_DESCRIPTIONS = {
     "daily_note": "create today's daily note (Daily/YYYY-MM-DD.md) if missing",
     "vault_tidy": "report notes sitting in Inbox/ (non-destructive)",
+    "backlink_check": "scan vault for broken or unresolved backlinks",
 }
 
 
