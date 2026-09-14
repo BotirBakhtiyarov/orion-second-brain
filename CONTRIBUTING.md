@@ -41,6 +41,23 @@ uv sync
 If you prefer pip: `pip install -e ".[dev]"` (add `mcp` and/or `semantic` extras
 if you need them).
 
+### Makefile shortcuts
+
+A root `Makefile` wraps the same commands CI uses. POSIX `make` is required
+(Git for Windows includes one; on Windows you can also run the `uv` commands
+directly).
+
+```bash
+make install       # uv sync
+make test          # uv run pytest -m "not network"
+make lint          # uv run ruff check .
+make format        # uv run ruff format .
+make format-check  # uv run ruff format --check .
+make check         # lint + format-check + test
+make run           # uv run orion
+make help          # list targets
+```
+
 ### Running ORION locally
 
 ```bash
@@ -62,8 +79,9 @@ Keep each branch focused on a single logical change.
 ## Tests
 
 ```bash
+make test                         # skip tests that download models (CI default)
 uv run pytest                     # full suite
-uv run pytest -m "not network"    # skip tests that download models
+uv run pytest -m "not network"    # same as `make test`
 uv run pytest tests/test_tools.py # a single file
 ```
 
@@ -83,10 +101,10 @@ ORION uses [Ruff](https://docs.astral.sh/ruff/) for both linting and formatting
 (configured under `[tool.ruff]` in `pyproject.toml`).
 
 ```bash
-uv run ruff check .            # lint
+make lint                      # lint
+make format                    # format
+make format-check              # verify formatting (what CI runs)
 uv run ruff check . --fix      # auto-fix what's safe
-uv run ruff format .           # format
-uv run ruff format --check .   # verify formatting (what CI runs)
 ```
 
 CI runs `ruff check .` and `ruff format --check .` — make sure both pass before
@@ -121,8 +139,8 @@ single commit.
 
 ## Pull request process
 
-1. Make sure `uv run pytest -m "not network"`, `uv run ruff check .` and
-   `uv run ruff format --check .` all pass locally.
+1. Make sure `make check` passes locally (lint, format-check, and
+   `pytest -m "not network"`).
 2. Push your branch and open a pull request against `main`, filling in the PR
    template.
 3. CI will run lint, format and the test matrix (Python 3.11–3.13). Address any
