@@ -60,11 +60,15 @@ def load_config(overrides: dict | None = None) -> Config:
 
     provider = providers.get_provider(os.getenv("ORION_PROVIDER", "deepseek"))
     api_key = providers.resolve_api_key(provider)
-
     vault_raw = overrides.get("vault") or os.getenv("OBSIDIAN_VAULT", "")
     if not vault_raw:
         raise ValueError(
             "OBSIDIAN_VAULT not found in .env. Example: OBSIDIAN_VAULT=/home/user/SecondBrain"
+        )
+    obsidian_vault = Path(vault_raw).expanduser().resolve()
+    if not obsidian_vault.is_dir():
+        raise ValueError(
+            f"Vault not found: {obsidian_vault} — check OBSIDIAN_VAULT in your .env file"
         )
 
     workspace_raw = overrides.get("workspace") or os.getenv("WORKSPACE") or str(Path.cwd())
