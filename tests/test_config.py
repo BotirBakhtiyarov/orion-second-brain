@@ -89,5 +89,7 @@ def test_global_price_override(clean_env):
 
 def test_bad_dir(clean_env):
     clean_env.setenv("OBSIDIAN_VAULT", "/tmp/does-not-exist")
-    with pytest.raises(ValueError, match="Vault not found: .*check OBSIDIAN_VAULT in your .env file"):
+    with pytest.raises(
+        ValueError, match="Vault not found: .*check OBSIDIAN_VAULT in your .env file"
+    ):
         load_config()

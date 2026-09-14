@@ -65,9 +65,11 @@ def load_config(overrides: dict | None = None) -> Config:
         raise ValueError(
             "OBSIDIAN_VAULT not found in .env. Example: OBSIDIAN_VAULT=/home/user/SecondBrain"
         )
-    obsidian_vault=Path(vault_raw).expanduser().resolve()
+    obsidian_vault = Path(vault_raw).expanduser().resolve()
     if not obsidian_vault.is_dir():
-        raise ValueError(f"Vault not found: {obsidian_vault} — check OBSIDIAN_VAULT in your .env file")
+        raise ValueError(
+            f"Vault not found: {obsidian_vault} — check OBSIDIAN_VAULT in your .env file"
+        )
 
     workspace_raw = overrides.get("workspace") or os.getenv("WORKSPACE") or str(Path.cwd())
     history_raw = os.getenv("ORION_HISTORY") or str(Path.home() / ".orion" / "history.json")
