@@ -89,42 +89,41 @@ def test_loop_runs_due_jobs(tmp_path):
 
     assert seen and seen[0][0] == "d"
 
+
 def test_task_backlink_check(tmp_path):
     # 1. Create a dummy vault using pytest's temporary directory
     class DummyVault:
         def __init__(self, root):
             self.root = root
-            
+
         def list_notes(self, prefix=""):
             # Return the relative paths of the files we are about to create
             return {"notes": ["Index.md", "Valid Note.md"], "total": 2}
-            
+
         def read(self, path):
             # Read the actual file content from the temporary directory
             return (self.root / path).read_text(encoding="utf-8")
-            
+
         # Add transport mock just in case your function uses vault.transport.read()
         @property
         def transport(self):
             return self
 
     vault = DummyVault(tmp_path)
-    
+
     # 2. Create the physical files in the temporary directory
     # Index.md has one valid link and two broken links
     index_file = tmp_path / "Index.md"
     index_file.write_text(
-        "Here is a [[Valid Note]].\n"
-        "Here is a [[Missing Note]] and a [[Missing Alias|Click here]].",
-        encoding="utf-8"
+        "Here is a [[Valid Note]].\nHere is a [[Missing Note]] and a [[Missing Alias|Click here]].",
+        encoding="utf-8",
     )
-    
+
     valid_file = tmp_path / "Valid Note.md"
     valid_file.write_text("This note exists.", encoding="utf-8")
 
     # 3. Run the task and assert the result
     result = task_backlink_check(vault)
-    
+
     # We expect exactly 2 broken links (Missing Note and Missing Alias)
     assert result == "backlink check: found 2 unresolved link(s)"
-

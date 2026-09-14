@@ -88,22 +88,17 @@ def task_vault_tidy(vault) -> str:
 
 def task_backlink_check(vault) -> str:
     """Scan notes for unresolved [[...]] links and report non-destructively."""
-    # Retrieve all notes based on the vault structure we saw in the test failure
     notes_list = vault.list_notes().get("notes", [])
 
-    # Obsidian links omit the .md extension. Create a set of base names for fast O(1) lookups.
+    # Obsidian links omit the .md extension. Created a set of base names for fast O(1) lookups.
     existing_note_names = {Path(n).stem for n in notes_list}
 
-    broken_links_count = 0
+    # Used a set to collect broken links so duplicates are only counted once
+    missing_targets = set()
     link_pattern = re.compile(r"\[\[(.*?)\]\]")
 
     for note_path in notes_list:
-        # NOTE: You will need to verify the exact method ORION uses to read a file's content.
-        # It is likely vault.read(note_path), vault.read_note(note_path), or vault.transport.read(note_path).
-        try:
-            content = vault.transport.read(note_path)
-        except AttributeError:
-            content = vault.read(note_path)  # Fallback if transport doesn't have read()
+        content = vault.transport.read(note_path)
 
         matches = link_pattern.findall(content)
 
@@ -112,11 +107,14 @@ def task_backlink_check(vault) -> str:
             target = match.split("|")[0].split("#")[0].strip()
 
             if target and target not in existing_note_names:
-                broken_links_count += 1
+                # Add the broken target to our set
+                missing_targets.add(target)
 
-    if broken_links_count == 0:
+    # Count how many unique broken targets we found
+    count = len(missing_targets)
+    if count == 0:
         return "backlink check: 0 unresolved links found"
-    return f"backlink check: found {broken_links_count} unresolved link(s)"
+    return f"backlink check: found {count} unresolved link(s)"
 
 
 TASKS = {
