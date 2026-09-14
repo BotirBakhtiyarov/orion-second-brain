@@ -397,6 +397,7 @@ orion/
 ├── img/             # README assets (screenshots, demo.gif)
 ├── .github/         # CI, release automation, issue templates, labels.yml
 ├── pyproject.toml   # project + tooling config
+├── Makefile         # contributor shortcuts (make check, make test, …)
 ├── .env.example     # configuration template
 └── README.md
 ```
@@ -426,10 +427,11 @@ shut down cleanly.
 ## Testing
 
 ```bash
+make check               # lint + format-check + tests (matches CI)
+make test                # pytest -m "not network"
+make lint                # ruff check
+make format-check        # ruff format --check
 uv run pytest            # everything (the network test self-skips if offline)
-uv run pytest -m "not network"   # skip tests that download models
-uv run ruff check .      # lint
-uv run ruff format --check .     # formatting
 ```
 
 Some tests need the optional extras: `tests/test_mcp.py` requires `mcp`, and
